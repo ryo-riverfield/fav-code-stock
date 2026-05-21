@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { signIn, signUp, type AuthFormState } from "@/app/actions/auth";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +18,15 @@ const initialState: AuthFormState = {};
 
 type Mode = "login" | "signup";
 
-export function LoginForm({ authError }: { authError?: string }) {
+export function LoginForm({
+  authError,
+  appSubtitle,
+  showDevBadge,
+}: {
+  authError?: string;
+  appSubtitle: string;
+  showDevBadge: boolean;
+}) {
   const [mode, setMode] = useState<Mode>("login");
   const [loginState, loginAction, loginPending] = useActionState(
     signIn,
@@ -35,9 +44,19 @@ export function LoginForm({ authError }: { authError?: string }) {
   return (
     <Card className="w-full max-w-md border-border/60 bg-card/80 shadow-xl backdrop-blur-sm">
       <CardHeader className="text-center">
-        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          fav-code-stock
-        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            {appSubtitle}
+          </p>
+          {showDevBadge && (
+            <Badge
+              variant="outline"
+              className="border-amber-500/60 font-mono text-xs text-amber-500"
+            >
+              DEV
+            </Badge>
+          )}
+        </div>
         <CardTitle className="text-2xl tracking-tight">
           {mode === "login" ? "ログイン" : "新規登録"}
         </CardTitle>

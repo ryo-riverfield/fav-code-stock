@@ -1,3 +1,4 @@
+import { AppBranding } from "@/components/app-branding";
 import { UserMenu } from "@/components/auth/user-menu";
 import { StockForm } from "@/components/stock-form";
 import { StockList } from "@/components/stock-list";
@@ -8,14 +9,7 @@ export default function HomePage() {
     <div className="min-h-full flex flex-col">
       <header className="border-b border-border/80 bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-              fav-code-stock
-            </p>
-            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-              Developer Stock
-            </h1>
-          </div>
+          <AppBranding />
           <UserMenu />
         </div>
       </header>

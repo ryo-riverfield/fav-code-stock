@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export type CreateStockResult =
-  | { success: true }
-  | { error: string };
+export type StockActionResult = { success: true } | { error: string };
+
+export type CreateStockResult = StockActionResult;
 
 export async function createStock(
   formData: FormData
@@ -60,4 +60,28 @@ export async function fetchStocks() {
   }
 
   return data ?? [];
+}
+
+export async function deleteStock(id: number): Promise<StockActionResult> {
+  if (!Number.isInteger(id) || id <= 0) {
+    return { error: "無効なストック ID です" };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "ログインが必要です" };
+  }
+
+  const { error } = await supabase.from("stocks").delete().eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/");
+  return { success: true };
 }
