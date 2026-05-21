@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { fetchStocks } from "@/app/actions/stocks";
+import { DeleteStockButton } from "@/components/delete-stock-button";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -40,11 +41,17 @@ export async function StockList() {
                 <CardTitle className="text-base font-semibold">
                   {stock.title}
                 </CardTitle>
-                {stock.code_lang && (
-                  <Badge variant="secondary" className="font-mono text-xs">
-                    {stock.code_lang}
-                  </Badge>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {stock.code_lang && (
+                    <Badge variant="secondary" className="font-mono text-xs">
+                      {stock.code_lang}
+                    </Badge>
+                  )}
+                  <DeleteStockButton
+                    stockId={stock.id}
+                    stockTitle={stock.title}
+                  />
+                </div>
               </div>
               <CardDescription className="font-mono text-xs">
                 {formatDate(stock.created_at)}
