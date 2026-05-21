@@ -26,10 +26,17 @@ create policy "Users can delete own stocks"
   on stocks for delete
   using (auth.uid() = user_id);
 
--- Supabase ダッシュボード設定（開発時）:
+-- Supabase ダッシュボード設定:
 -- Authentication > Providers > Email
 --   - Enable Email provider: ON
 -- Authentication > URL Configuration
---   - Site URL: http://localhost:3000
---   - Redirect URLs: http://localhost:3000/auth/callback
+--   - Site URL: https://fav-code-stock.vercel.app
+--   - Redirect URLs:
+--       https://fav-code-stock.vercel.app/auth/callback
+--       http://localhost:3000/auth/callback
 -- すぐ試す場合: Authentication > Providers > Email > Confirm email: OFF
+--
+-- Vercel Environment Variables:
+--   NEXT_PUBLIC_SUPABASE_URL
+--   NEXT_PUBLIC_SUPABASE_ANON_KEY
+--   NEXT_PUBLIC_SITE_URL=https://fav-code-stock.vercel.app
