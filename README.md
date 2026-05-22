@@ -37,7 +37,7 @@
 - Frontend: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui
 - Backend/DB: Supabase (PostgreSQL)
 - Hosting: Vercel
-- Editor: Cursol (VScode)
+- Editor: Cursor (VScode)
 
 ## ローカル開発
 
