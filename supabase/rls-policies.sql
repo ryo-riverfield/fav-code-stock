@@ -1,4 +1,5 @@
--- Supabase SQL Editor で実行してください
+-- Supabase SQL Editor で実行してください（初回: stocks の RLS）
+-- カテゴリー・言語マスタは supabase/migrations/002_categories_languages.sql を実行
 -- Authentication > Providers で Email を有効化してください
 
 alter table stocks enable row level security;

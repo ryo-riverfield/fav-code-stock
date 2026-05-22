@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { updateStock } from "@/app/actions/stocks";
+import { ActionFeedbackDialog } from "@/components/action-feedback-dialog";
+import { StockFields } from "@/components/stock-fields";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,21 +14,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import type { Stock } from "@/types/stock";
+import type { Category } from "@/types/category";
+import type { Language } from "@/types/language";
+import type { StockWithRelations } from "@/types/stock";
 
-type EditableStock = Pick<
-  Stock,
-  "id" | "title" | "url" | "code" | "code_lang" | "created_user"
->;
-
-export function EditStockButton({ stock }: { stock: EditableStock }) {
+export function EditStockButton({
+  stock,
+  categories,
+  languages,
+}: {
+  stock: StockWithRelations;
+  categories: Category[];
+  languages: Language[];
+}) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const fieldId = (name: string) => `${name}-${stock.id}`;
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,10 +44,12 @@ export function EditStockButton({ stock }: { stock: EditableStock }) {
         return;
       }
       setOpen(false);
+      setFeedback("ストックを更新しました");
     });
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
@@ -61,53 +67,18 @@ export function EditStockButton({ stock }: { stock: EditableStock }) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="id" value={stock.id} />
-          <div className="space-y-2">
-            <Label htmlFor={fieldId("title")}>タイトル *</Label>
-            <Input
-              id={fieldId("title")}
-              name="title"
-              required
-              defaultValue={stock.title}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={fieldId("url")}>URL</Label>
-            <Input
-              id={fieldId("url")}
-              name="url"
-              type="url"
-              defaultValue={stock.url ?? ""}
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor={fieldId("code_lang")}>言語</Label>
-              <Input
-                id={fieldId("code_lang")}
-                name="code_lang"
-                className="font-mono text-sm"
-                defaultValue={stock.code_lang ?? ""}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={fieldId("created_user")}>登録者</Label>
-              <Input
-                id={fieldId("created_user")}
-                name="created_user"
-                defaultValue={stock.created_user ?? ""}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={fieldId("code")}>コード</Label>
-            <Textarea
-              id={fieldId("code")}
-              name="code"
-              rows={6}
-              className="font-mono text-sm leading-relaxed"
-              defaultValue={stock.code ?? ""}
-            />
-          </div>
+          <StockFields
+            idPrefix={`edit-${stock.id}`}
+            categories={categories}
+            languages={languages}
+            defaultValues={{
+              title: stock.title,
+              url: stock.url ?? "",
+              code: stock.code ?? "",
+              category_id: stock.category_id,
+              code_lang_id: stock.code_lang_id,
+            }}
+          />
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter className="border-t-0 bg-transparent p-0 sm:justify-end">
             <Button
@@ -125,5 +96,14 @@ export function EditStockButton({ stock }: { stock: EditableStock }) {
         </form>
       </DialogContent>
     </Dialog>
+
+    <ActionFeedbackDialog
+      open={feedback !== null}
+      message={feedback}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) setFeedback(null);
+      }}
+    />
+    </>
   );
 }
