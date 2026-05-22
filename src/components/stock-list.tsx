@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { fetchStocks } from "@/app/actions/stocks";
 import { DeleteStockButton } from "@/components/delete-stock-button";
+import { EditStockButton } from "@/components/edit-stock-button";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -47,6 +48,7 @@ export async function StockList() {
                       {stock.code_lang}
                     </Badge>
                   )}
+                  <EditStockButton stock={stock} />
                   <DeleteStockButton
                     stockId={stock.id}
                     stockTitle={stock.title}
