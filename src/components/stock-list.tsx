@@ -1,26 +1,36 @@
-import Link from "next/link";
 import { fetchStocks } from "@/app/actions/stocks";
-import { DeleteStockButton } from "@/components/delete-stock-button";
-import { EditStockButton } from "@/components/edit-stock-button";
-import { Badge } from "@/components/ui/badge";
+import { fetchCategories, fetchLanguages } from "@/app/actions/masters";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import type { Stock } from "@/types/stock";
+  StockListAccordion,
+  type CategoryGroup,
+} from "@/components/stock-list-accordion";
+import { Card, CardContent } from "@/components/ui/card";
+import type { StockWithRelations } from "@/types/stock";
 
-function formatDate(iso: string) {
-  return new Intl.DateTimeFormat("ja-JP", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(iso));
+function groupStocksByCategory(stocks: StockWithRelations[]): CategoryGroup[] {
+  const map = new Map<number, CategoryGroup>();
+
+  for (const stock of stocks) {
+    const categoryId = stock.category_id;
+    const categoryName = stock.categories?.name ?? "不明";
+
+    if (!map.has(categoryId)) {
+      map.set(categoryId, { categoryId, categoryName, stocks: [] });
+    }
+    map.get(categoryId)!.stocks.push(stock);
+  }
+
+  return Array.from(map.values())
+    .filter((g) => g.stocks.length > 0)
+    .sort((a, b) => a.categoryName.localeCompare(b.categoryName, "ja"));
 }
 
 export async function StockList() {
-  const stocks = (await fetchStocks()) as Stock[];
+  const [stocks, categories, languages] = await Promise.all([
+    fetchStocks(),
+    fetchCategories(),
+    fetchLanguages(),
+  ]);
 
   if (stocks.length === 0) {
     return (
@@ -32,54 +42,13 @@ export async function StockList() {
     );
   }
 
+  const groups = groupStocksByCategory(stocks);
+
   return (
-    <ul className="space-y-3">
-      {stocks.map((stock) => (
-        <li key={stock.id}>
-          <Card className="border-border/60 bg-card/60 transition-colors hover:border-border">
-            <CardHeader className="pb-2">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <CardTitle className="text-base font-semibold">
-                  {stock.title}
-                </CardTitle>
-                <div className="flex flex-wrap items-center gap-2">
-                  {stock.code_lang && (
-                    <Badge variant="secondary" className="font-mono text-xs">
-                      {stock.code_lang}
-                    </Badge>
-                  )}
-                  <EditStockButton stock={stock} />
-                  <DeleteStockButton
-                    stockId={stock.id}
-                    stockTitle={stock.title}
-                  />
-                </div>
-              </div>
-              <CardDescription className="font-mono text-xs">
-                {formatDate(stock.created_at)}
-                {stock.created_user && ` · ${stock.created_user}`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              {stock.url && (
-                <Link
-                  href={stock.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-sky-400 hover:underline break-all"
-                >
-                  {stock.url}
-                </Link>
-              )}
-              {stock.code && (
-                <pre className="overflow-x-auto rounded-lg border border-border/80 bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground/90">
-                  <code>{stock.code}</code>
-                </pre>
-              )}
-            </CardContent>
-          </Card>
-        </li>
-      ))}
-    </ul>
+    <StockListAccordion
+      groups={groups}
+      categories={categories}
+      languages={languages}
+    />
   );
 }

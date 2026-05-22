@@ -2,19 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { StockWithRelations } from "@/types/stock";
 
 export type StockActionResult = { success: true } | { error: string };
 
 export type CreateStockResult = StockActionResult;
 
 type ParsedStockFields =
-  | { ok: true; data: {
-      title: string;
-      url: string | null;
-      code: string | null;
-      code_lang: string | null;
-      created_user: string | null;
-    } }
+  | {
+      ok: true;
+      data: {
+        title: string;
+        url: string | null;
+        code: string | null;
+        category_id: number;
+        code_lang_id: number | null;
+      };
+    }
   | { ok: false; error: string };
 
 function parseStockFormData(formData: FormData): ParsedStockFields {
@@ -23,14 +27,29 @@ function parseStockFormData(formData: FormData): ParsedStockFields {
     return { ok: false, error: "タイトルは必須です" };
   }
 
+  const categoryId = Number(formData.get("category_id"));
+  if (!Number.isInteger(categoryId) || categoryId <= 0) {
+    return { ok: false, error: "カテゴリーを選択してください" };
+  }
+
+  const codeLangRaw = formData.get("code_lang_id");
+  let code_lang_id: number | null = null;
+  if (codeLangRaw != null && String(codeLangRaw) !== "") {
+    const id = Number(codeLangRaw);
+    if (!Number.isInteger(id) || id <= 0) {
+      return { ok: false, error: "言語の選択が不正です" };
+    }
+    code_lang_id = id;
+  }
+
   return {
     ok: true,
     data: {
       title,
       url: String(formData.get("url") ?? "").trim() || null,
       code: String(formData.get("code") ?? "").trim() || null,
-      code_lang: String(formData.get("code_lang") ?? "").trim() || null,
-      created_user: String(formData.get("created_user") ?? "").trim() || null,
+      category_id: categoryId,
+      code_lang_id,
     },
   };
 }
@@ -71,7 +90,7 @@ export async function createStock(
   return { success: true };
 }
 
-export async function fetchStocks() {
+export async function fetchStocks(): Promise<StockWithRelations[]> {
   const auth = await requireAuthUser();
   if (auth.error) {
     return [];
@@ -79,14 +98,20 @@ export async function fetchStocks() {
 
   const { data, error } = await auth.supabase!
     .from("stocks")
-    .select("*")
+    .select(
+      `
+      *,
+      categories ( id, name ),
+      languages ( id, name, slug )
+    `
+    )
     .order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data ?? [];
+  return (data ?? []) as StockWithRelations[];
 }
 
 export async function updateStock(

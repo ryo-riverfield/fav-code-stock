@@ -1,11 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useTransition } from "react";
 import { createStock } from "@/app/actions/stocks";
+import { ActionFeedbackDialog } from "@/components/action-feedback-dialog";
+import { StockFields } from "@/components/stock-fields";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -13,91 +12,85 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { Category } from "@/types/category";
+import type { Language } from "@/types/language";
 
-type FormState = {
-  error?: string;
-  success?: boolean;
-};
+export function StockForm({
+  categories,
+  languages,
+  defaultCategoryId,
+}: {
+  categories: Category[];
+  languages: Language[];
+  defaultCategoryId?: number;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [formKey, setFormKey] = useState(0);
+  const [pending, startTransition] = useTransition();
 
-const initialState: FormState = {};
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
 
-export function StockForm() {
-  const [state, formAction, pending] = useActionState(
-    async (_prev: FormState, formData: FormData) => {
+    startTransition(async () => {
       const result = await createStock(formData);
       if ("error" in result && result.error) {
-        return { error: result.error };
+        setError(result.error);
+        return;
       }
-      return { success: true };
-    },
-    initialState
-  );
+      setFormKey((k) => k + 1);
+      setFeedback("ストックを追加しました");
+    });
+  }
 
   return (
-    <Card className="border-border/60 bg-card/80 shadow-lg backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="font-mono text-lg tracking-tight">
-          New Stock
-        </CardTitle>
-        <CardDescription>
-          コードスニペットやリンクをストックに追加
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form action={formAction} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">タイトル *</Label>
-            <Input
-              id="title"
-              name="title"
-              required
-              placeholder="useMemo の使い分け"
+    <>
+      <Card className="border-border/60 bg-card/80 shadow-lg backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="font-mono text-lg tracking-tight">
+            New Stock
+          </CardTitle>
+          <CardDescription>
+            コードスニペットやリンクをストックに追加
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <StockFields
+              key={formKey}
+              idPrefix="new-stock"
+              categories={categories}
+              languages={languages}
+              defaultValues={{
+                title: "",
+                url: "",
+                code: "",
+                category_id: defaultCategoryId,
+                code_lang_id: null,
+              }}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="url">URL</Label>
-            <Input id="url" name="url" type="url" placeholder="https://..." />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="code_lang">言語</Label>
-              <Input
-                id="code_lang"
-                name="code_lang"
-                placeholder="typescript"
-                className="font-mono text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="created_user">登録者</Label>
-              <Input
-                id="created_user"
-                name="created_user"
-                placeholder="you"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="code">コード</Label>
-            <Textarea
-              id="code"
-              name="code"
-              rows={8}
-              placeholder="const x = 1;"
-              className="font-mono text-sm leading-relaxed"
-            />
-          </div>
-          {state.error && (
-            <p className="text-sm text-destructive">{state.error}</p>
-          )}
-          {state.success && !state.error && (
-            <p className="text-sm text-emerald-500">ストックを追加しました</p>
-          )}
-          <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-            {pending ? "登録中..." : "ストックに追加"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button
+              type="submit"
+              disabled={pending}
+              className="w-full sm:w-auto"
+            >
+              {pending ? "登録中..." : "ストックに追加"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <ActionFeedbackDialog
+        open={feedback !== null}
+        message={feedback}
+        onOpenChange={(open) => {
+          if (!open) setFeedback(null);
+        }}
+      />
+    </>
   );
 }
