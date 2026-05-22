@@ -184,6 +184,9 @@ sequenceDiagram
 1. `supabase/rls-policies.sql` を実行（初回・stocks）
 2. `supabase/migrations/002_categories_languages.sql` を実行（マスタ + FK）
 3. **Authentication → Providers → Email** を ON
+ - Authentication → Sign In / Providers → 
+  - User Signups → Confirm email を ON
+  - Email → Password requirements を Lowercase, uppercase letters, digits and symbols（大文字小文字・数字・記号）
 4. **URL Configuration**: Site URL / Redirect URLs（本番・ローカル）
 5. Vercel に Supabase 環境変数を設定
 
